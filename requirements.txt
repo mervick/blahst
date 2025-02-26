@@ -1,0 +1,4 @@
+rlottie-python
+pydbus
+cairo
+numpy
