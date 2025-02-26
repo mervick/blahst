@@ -56,66 +56,40 @@ class LottieWindow(Gtk.Window):
         file = os.path.join(os.path.dirname(__file__), "animation.json")
         self.load_animation(file)
 
-        # self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        # self.add(self.box)
         self.frame_per_iter = 1
 
         self.drawing_area = Gtk.DrawingArea()
         self.drawing_area.connect("draw", self.on_draw)
         self.add(self.drawing_area)
 
-        # self.box.pack_start(self.drawing_area, True, True, 0)
-        #
-        # self.label = Gtk.Label(label="   Listening...")
-        # self.label.set_size_request(-1, 20)
-        # # self.label.set_use_markup(True)
-        # # self.label.set_markup('''
-        # # <span  weight="bold">Listening...</span>
-        # # ''')
-        # self.label.set_halign(Gtk.Align.CENTER)
-        # self.label.set_valign(Gtk.Align.CENTER)
-        # self.box.pack_end(self.label, False, False, 0)
-
-        # self.fps = self.animation.lottie_animation_get_framerate() * 8
         self.fps = self.animation.lottie_animation_get_framerate()
         interval = int(1000 / self.fps)
         self.timer = GLib.timeout_add(interval, self.update_frame)
 
     def do_show_spinner(self, obj):
-        # label = obj.get("label")
-        # self.label.set_label('Analyzing...')
         file = os.path.join(os.path.dirname(__file__), "animation2.json")
         self.load_animation(file)
         self.frame_per_iter = 3
 
-        # self.frame_number = None
-        # spinner = Gtk.Spinner()
-        # spinner.set_size_request(200, 200)
-        # spinner.start()
-        # self.box.remove(self.drawing_area)
-        # self.box.pack_start(spinner, True, True, 0)
         GLib.source_remove(self.timer)
         self.fps = self.animation.lottie_animation_get_framerate() * 5
         interval = int(1000 / self.fps)
         self.timer = GLib.timeout_add(interval, self.update_frame)
 
     def on_draw(self, widget, cr):
-        if self.frame_number is not None:
-            buffer = self.animation.lottie_animation_render(frame_num=self.frame_number)
-            width, height = self.animation.lottie_animation_get_size()
-            img = Image.frombuffer("RGBA", (width, height), buffer, "raw", "BGRA")
-            img = img.resize(WIN_SIZE, Image.ANTIALIAS)
-            pixbuf = pil_to_pixbuf_numpy(img)
-            surface = Gdk.cairo_surface_create_from_pixbuf(pixbuf, 0, None)
-            cr.set_source_surface(surface, 0, 0)
-            cr.paint()
+        buffer = self.animation.lottie_animation_render(frame_num=self.frame_number)
+        width, height = self.animation.lottie_animation_get_size()
+        img = Image.frombuffer("RGBA", (width, height), buffer, "raw", "BGRA")
+        img = img.resize(WIN_SIZE, Image.ANTIALIAS)
+        pixbuf = pil_to_pixbuf_numpy(img)
+        surface = Gdk.cairo_surface_create_from_pixbuf(pixbuf, 0, None)
+        cr.set_source_surface(surface, 0, 0)
+        cr.paint()
 
     def update_frame(self):
-        if self.frame_number is not None:
-            self.frame_number = (self.frame_number + self.frame_per_iter) % self.frame_count
-            self.drawing_area.queue_draw()
-            return True
-        return False
+        self.frame_number = (self.frame_number + self.frame_per_iter) % self.frame_count
+        self.drawing_area.queue_draw()
+        return True
 
 
 class MultiMonitorApp:
@@ -130,6 +104,12 @@ class MultiMonitorApp:
     """
     def SendMessage(self, message):
         print(f"Received: {message}")
+        if message == "close":
+            for window in self.windows:
+                window.destroy()
+            Gtk.main_quit()
+            return
+
         for window in self.windows:
             window.emit('show_spinner', {"label": message})
 
