@@ -2,16 +2,11 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib, Gdk, GObject
-from rlottie_python import LottieAnimation
 from PIL import Image
-import cairo
-import json
 from gi.repository import GdkPixbuf
 import numpy as np
 from pydbus import SessionBus
-
 from rlottie_python import LottieAnimation
-import json
 
 
 WIN_SIZE = (235, 235)
@@ -42,6 +37,10 @@ class LottieWindow(Gtk.Window):
         'show_spinner': (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
     }
 
+    animation: LottieAnimation
+    frame_count: int
+    frame_number: int
+
     def load_animation(self, file: str) -> None:
         self.animation = LottieAnimation.from_file(file)
         self.frame_count  = self.animation.lottie_animation_get_totalframe()
@@ -51,11 +50,9 @@ class LottieWindow(Gtk.Window):
         super().__init__(title="Lottie Animation in GTK")
         window_width, window_height = WIN_SIZE
         self.set_default_size(window_width, window_height)
-        # self.set_default_size(window_width, window_height + 20)
 
         file = os.path.join(os.path.dirname(__file__), "animation.json")
         self.load_animation(file)
-
         self.frame_per_iter = 1
 
         self.drawing_area = Gtk.DrawingArea()
@@ -111,8 +108,7 @@ class MultiMonitorApp:
             return
 
         for window in self.windows:
-            window.emit('show_spinner', {"label": message})
-
+            window.emit('show_spinner', {"message": message})
 
     def __init__(self):
         self.windows = []
@@ -127,22 +123,14 @@ class MultiMonitorApp:
             monitor = display.get_monitor(i)
             geometry = monitor.get_geometry()
 
-            # Создаем окно
             window = LottieWindow()
             window.set_title(f"Monitor {i + 1}")
-            window.set_decorated(False)  # Убираем рамку
-            window.set_app_paintable(True)  # Разрешаем рисование
-            window.set_visual(window.get_screen().get_rgba_visual())  # Прозрачность
-            window.set_type_hint(Gdk.WindowTypeHint.DOCK)  # Окно поверх всех окон
-            window.set_keep_above(True)  # Окно всегда поверх других окон
+            window.set_decorated(False)  # Remove frame
+            window.set_app_paintable(True)  # Enable drawing
+            window.set_visual(window.get_screen().get_rgba_visual())  # Transparency
+            window.set_type_hint(Gdk.WindowTypeHint.DOCK)  # Window on top of all windows
+            window.set_keep_above(True)  # Window always on top of other windows
             window.connect("destroy", Gtk.main_quit)
-
-            # # Добавляем анимацию (например, Spinner)
-            # spinner = Gtk.Spinner()
-            # spinner.set_size_request(100, 100)
-            # spinner.start()
-            # window.add(spinner)
-
             window.show_all()
 
             window_width, window_height = 320, 320
@@ -151,36 +139,6 @@ class MultiMonitorApp:
             window.move(x, y)
 
             self.windows.append(window)
-        # for i in range(n_monitors):
-        #     monitor = display.get_monitor(i)
-        #     geometry = monitor.get_geometry()
-        #
-        #     # Создаем окно
-        #     window = Gtk.Window()
-        #     window.set_title(f"Monitor {i + 1}")
-        #     window.set_decorated(False)  # Убираем рамку
-        #     window.set_app_paintable(True)  # Разрешаем рисование
-        #     window.set_visual(window.get_screen().get_rgba_visual())  # Прозрачность
-        #     window.set_type_hint(Gdk.WindowTypeHint.DOCK)  # Окно поверх всех окон
-        #     window.set_keep_above(True)  # Окно всегда поверх других окон
-        #     window.connect("destroy", Gtk.main_quit)
-        #
-        #     # Добавляем анимацию (например, Spinner)
-        #     spinner = Gtk.Spinner()
-        #     spinner.set_size_request(100, 100)
-        #     spinner.start()
-        #     window.add(spinner)
-        #
-        #     # Показываем окно
-        #     window.show_all()
-        #
-        #     # Центрируем окно на мониторе
-        #     window_width, window_height = 200, 200  # Размер окна
-        #     x = geometry.x + (geometry.width - window_width) // 2
-        #     y = geometry.y + (geometry.height - window_height) // 2
-        #     window.move(x, y)
-        #
-        #     self.windows.append(window)
 
 if __name__ == "__main__":
     app = MultiMonitorApp()
