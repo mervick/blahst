@@ -57,13 +57,16 @@ python3 "/home/data/projects/blahst/spinner.py" &
 APP_PID=$!
 
 echo "Recording now: "$(date +%s.%N)
-
 rec -q -t wav $ramf rate 16k silence 1 0.1 1% 1 2.0 5%  2>/dev/null
 
-gdbus call --session \
-    --dest dev.mervick.blahstSpinner \
-    --object-path /dev/mervick/blahstSpinner \
-    --method dev.mervick.blahstSpinner.SendMessage "transcribe"
+function dbus-send() {
+  gdbus call --session \
+      --dest dev.mervick.blahstSpinner \
+      --object-path /dev/mervick/blahstSpinner \
+      --method dev.mervick.blahstSpinner.SendMessage "$1"
+}
+
+dbus-send "transcribe"
 echo "Sending now: "$(date +%s.%N)
 
 start_time=$SECONDS
@@ -72,10 +75,9 @@ start_time=$SECONDS
 str="$(transcribe -t $NTHR -nt -m $model -f $ramf -l $lang --no-prints ${rem_args[@]} )"
 [[ $? != 0 ]] && kill $APP_PID && exit 123
 
-echo "$TRANSLATING from $lang"
-echo "Got text now: "$(date +%s.%N)
-
-echo "$str"
+#echo "$TRANSLATING from $lang"
+#echo "Got text now: "$(date +%s.%N)
+#echo "$str"
 
 # Whisper detected non-speech events such as (wind blowing):
 str="${str/\(*\)}"
@@ -100,4 +102,5 @@ else
   echo "$current_clipboard" | xsel -ib
 fi
 
+dbus-send "close"
 kill $APP_PID
