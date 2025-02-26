@@ -13,15 +13,14 @@ TEMPD='/dev/shm'
 ramf="$TEMPD/wfile"
 NTHR=8
 CLIPBOARD=false
-lang="auto"
+#lang="auto"
 #lang="en"
-#lang="ru"
+lang="ru"
 #lang="uk"
 
 #model=${WHISPER_DMODEL:-"/home/data/projects/whisper.cpp/models/ggml-medium.bin"}
 #model=${WHISPER_DMODEL:-"/home/data/projects/whisper.cpp/models/ggml-small-q5_1.bin"}
-model=${WHISPER_DMODEL:-"/home/data/projects/whisper.cpp/models/ggml-small-q5_1.bin"}
-#model=${WHISPER_DMODEL:-"/home/data/projects/whisper.cpp/models/ggml-large-v3-turbo-q5_0.bin"}
+model=${WHISPER_DMODEL:-"/home/data/projects/whisper.cpp/models/ggml-large-v3-turbo-q5_0.bin"}
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -61,8 +60,16 @@ echo "Recording now: "$(date +%s.%N)
 
 rec -q -t wav $ramf rate 16k silence 1 0.1 1% 1 2.0 5%  2>/dev/null
 
+gdbus call --session \
+    --dest dev.mervick.blahstSpinner \
+    --object-path /dev/mervick/blahstSpinner \
+    --method dev.mervick.blahstSpinner.SendMessage "transcribe"
 echo "Sending now: "$(date +%s.%N)
-str="$(transcribe -t 16 -nt -m $model -f $ramf -l $lang ${rem_args[@]} --no-prints 2>/dev/null)"
+
+start_time=$SECONDS
+#str="$(transcribe -t 16 -nt -m $model -f $ramf -l $lang ${rem_args[@]} --no-prints 2>/dev/null)"
+#str="$(transcribe -t $NTHR -nt -m $model -f $ramf -l $lang --no-prints ${rem_args[@]} 2>/dev/null)"
+str="$(transcribe -t $NTHR -nt -m $model -f $ramf -l $lang --no-prints ${rem_args[@]} )"
 [[ $? != 0 ]] && kill $APP_PID && exit 123
 
 echo "$TRANSLATING from $lang"
@@ -79,8 +86,11 @@ str="${str#$'\n'}"
 if [ "$CLIPBOARD" = true ]; then
   echo "$str" | xsel -ib
 else
+  elapsed_time=$((SECONDS - start_time))
+
   current_clipboard="$(xsel --clipboard --output)"
   sleep 0.1
+#  echo "$str ($elapsed_time sec)" | awk '{$1=$1};1' | xsel -ib
   echo "$str" | awk '{$1=$1};1' | xsel -ib
   sleep 0.1
   xdotool key --clearmodifiers ctrl+v
