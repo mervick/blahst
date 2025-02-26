@@ -50,29 +50,31 @@ class LottieWindow(Gtk.Window):
     def __init__(self):
         super().__init__(title="Lottie Animation in GTK")
         window_width, window_height = WIN_SIZE
-        self.set_default_size(window_width, window_height + 20)
+        self.set_default_size(window_width, window_height)
+        # self.set_default_size(window_width, window_height + 20)
 
         file = os.path.join(os.path.dirname(__file__), "animation.json")
         self.load_animation(file)
 
-        self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        self.add(self.box)
+        # self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        # self.add(self.box)
         self.frame_per_iter = 1
 
         self.drawing_area = Gtk.DrawingArea()
         self.drawing_area.connect("draw", self.on_draw)
-        # self.add(self.drawing_area)
-        self.box.pack_start(self.drawing_area, True, True, 0)
+        self.add(self.drawing_area)
 
-        self.label = Gtk.Label(label="   Listening...")
-        self.label.set_size_request(-1, 20)
-        # self.label.set_use_markup(True)
-        # self.label.set_markup('''
-        # <span  weight="bold">Listening...</span>
-        # ''')
-        self.label.set_halign(Gtk.Align.CENTER)
-        self.label.set_valign(Gtk.Align.CENTER)
-        self.box.pack_end(self.label, False, False, 0)
+        # self.box.pack_start(self.drawing_area, True, True, 0)
+        #
+        # self.label = Gtk.Label(label="   Listening...")
+        # self.label.set_size_request(-1, 20)
+        # # self.label.set_use_markup(True)
+        # # self.label.set_markup('''
+        # # <span  weight="bold">Listening...</span>
+        # # ''')
+        # self.label.set_halign(Gtk.Align.CENTER)
+        # self.label.set_valign(Gtk.Align.CENTER)
+        # self.box.pack_end(self.label, False, False, 0)
 
         # self.fps = self.animation.lottie_animation_get_framerate() * 8
         self.fps = self.animation.lottie_animation_get_framerate()
@@ -81,7 +83,7 @@ class LottieWindow(Gtk.Window):
 
     def do_show_spinner(self, obj):
         # label = obj.get("label")
-        self.label.set_label('Analyzing...')
+        # self.label.set_label('Analyzing...')
         file = os.path.join(os.path.dirname(__file__), "animation2.json")
         self.load_animation(file)
         self.frame_per_iter = 3
